@@ -1,0 +1,13 @@
+!table
+!version 300
+!charset Neutral
+
+Definition Table
+  Type NATIVE Charset "Neutral"
+  Fields 6
+    Layer Char (254) ;
+    PaperSpace Char (254) ;
+    SubClasses Char (254) ;
+    Linetype Char (254) ;
+    EntityHandle Char (254) ;
+    Text Char (254) ;

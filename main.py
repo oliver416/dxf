@@ -2,9 +2,43 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import fiona
 import svgwrite
+from shapely.ops import transform
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 import pandas as pd
+
+
+def create_svg_from_polygon(polygon, scale_factor=1., fill_color=None):
+    if isinstance(polygon, Polygon):
+        if polygon.is_empty:
+            return '<g />'
+        if fill_color is None:
+            fill_color = "#66cc99" if polygon.is_valid else "#ff3333"
+        exterior_coords = [
+            ["{},-{}".format(*c) for c in polygon.exterior.coords]]
+        interior_coords = [
+            ["{},-{}".format(*c) for c in interior.coords]
+            for interior in polygon.interiors]
+        path = " ".join([
+                            "M {} L {} z".format(coords[0], " L ".join(coords[1:]))
+                            for coords in exterior_coords + interior_coords])
+        return (
+            '<path fill-rule="evenodd" fill="{2}" stroke="#555555" '
+            'stroke-width="{0}" opacity="0.6" d="{1}" />'
+        ).format(2. * scale_factor, path, fill_color)
+
+
+def create_svg_from_linestring(linestring, scale_factor=1., stroke_color=None):
+    # TODO: isinstance
+    if linestring.is_empty:
+        return '<g />'
+    if stroke_color is None:
+        stroke_color = "#66cc99" if linestring.is_valid else "#ff3333"
+    pnt_format = " ".join(["{},{}".format(*c) for c in linestring.coords])
+    return (
+        '<polyline fill="none" stroke="{2}" stroke-width="{1}" '
+        'points="{0}" opacity="0.8" />'
+    ).format(pnt_format, 2. * scale_factor, stroke_color)
 
 # print(gpd.__version__)
 # print(fiona.supported_drivers)
@@ -20,9 +54,14 @@ dxf = gpd.read_file('./data/For_svg.dxf')
 # print(dxf.loc[0]['Layer'])
 
 parcel = loads(str(dxf.loc[400].geometry))
+# print(create_svg(parcel))
+# print(parcel)
 parcel_polygon = Polygon(parcel)
+# print(parcel_polygon)
+# print(transform(lambda x,y,z=None: (x, y*-1), parcel_polygon))
 parcel_polygon = gpd.GeoSeries(parcel_polygon)
 parcel_polygon = gpd.GeoDataFrame({'geometry': parcel_polygon})
+
 
 parcel_centroid = parcel_polygon.centroid
 temp = parcel_centroid
@@ -106,12 +145,15 @@ points_df_area = gpd.GeoDataFrame({'geometry': points_gs_area, 'area': points_gs
 # parcels_id = gpd.sjoin(parcels_df, points_df_id).drop(['index_right'], axis='columns')
 parcels_id = gpd.sjoin(parcels_df, points_df_id, how='inner', op='intersects')
 # parcels_area = gpd.sjoin(parcels_id, points_df_area)
-print(parcels_id.drop_duplicates(subset=['id'], keep=False))
+# print(parcels_id.drop_duplicates(subset=['id'], keep=False))
 # print(parcels_area)
 
-for i in parcels_id.index:
-    print(parcels_id.loc[i].geometry)
-print(parcels_id.loc[105])
+pol = loads(str(parcels_id.loc[100].geometry))
+print(create_svg_from_polygon(pol))
+
+# for i in parcels_id.index:
+#     print(parcels_id.loc[i].geometry)
+# print(parcels_id.loc[160])
 
 # print(union_obj)
 # print(points_df)
@@ -125,8 +167,8 @@ for layer in obj_list:
     if layer != 'TEXT':
         if layer == 'PARCELS':
             pass
-            # for obj in parcels_area:
-            #     print(obj)
+            for obj in obj_list[layer]:
+                svg.append(obj.svg())
         else:
             for obj in obj_list[layer]:
                 svg.append(obj.svg())
@@ -136,9 +178,10 @@ for layer in obj_list:
             x = float(obj[0].x)
             y = float(obj[0].y)
             text = """<text x="%s" y="%s">%s</text>""" %(x,y, obj[1])
-            svg.append(text)
+            # svg.append(text)
 
 # viewBox="1382800 493250 900 500"
+# viewBox="1381940 492750 800 450"
 # transform="rotate(180)"
 
 svg_header = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>

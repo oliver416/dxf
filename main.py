@@ -4,16 +4,17 @@ import fiona
 import svgwrite
 from shapely.ops import transform
 from shapely.wkt import loads
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString
 import pandas as pd
 
 
-def create_svg_from_polygon(polygon, scale_factor=1., fill_color=None):
+# def create_svg_from_polygon(polygon, scale_factor=1., class_name=None):
+def create_svg_from_polygon(polygon, class_name=None):
     if isinstance(polygon, Polygon):
         if polygon.is_empty:
             return '<g />'
-        if fill_color is None:
-            fill_color = "#66cc99" if polygon.is_valid else "#ff3333"
+        if class_name is None:
+            class_name='default'
         exterior_coords = [
             ["{},-{}".format(*c) for c in polygon.exterior.coords]]
         interior_coords = [
@@ -22,23 +23,28 @@ def create_svg_from_polygon(polygon, scale_factor=1., fill_color=None):
         path = " ".join([
                             "M {} L {} z".format(coords[0], " L ".join(coords[1:]))
                             for coords in exterior_coords + interior_coords])
+        # return (
+        #     '<path fill-rule="evenodd" stroke="#555555" '
+        #     'stroke-width="{0}" class="{2}" opacity="0.6" d="{1}" />'
+        # ).format(2. * scale_factor, path, class_name)
         return (
-            '<path fill-rule="evenodd" fill="{2}" stroke="#555555" '
-            'stroke-width="{0}" opacity="0.6" d="{1}" />'
-        ).format(2. * scale_factor, path, fill_color)
+            '<path fill-rule="evenodd" class="{1}" d="{0}" />'
+        ).format(path, class_name)
 
 
-def create_svg_from_linestring(linestring, scale_factor=1., stroke_color=None):
-    # TODO: isinstance
-    if linestring.is_empty:
-        return '<g />'
-    if stroke_color is None:
-        stroke_color = "#66cc99" if linestring.is_valid else "#ff3333"
-    pnt_format = " ".join(["{},{}".format(*c) for c in linestring.coords])
-    return (
-        '<polyline fill="none" stroke="{2}" stroke-width="{1}" '
-        'points="{0}" opacity="0.8" />'
-    ).format(pnt_format, 2. * scale_factor, stroke_color)
+def create_svg_from_linestring(linestring, scale_factor=1., stroke_color=None, class_name=None):
+    if isinstance(linestring, LineString):
+        if linestring.is_empty:
+            return '<g />'
+        if stroke_color is None:
+            stroke_color = "#66cc99" if linestring.is_valid else "#ff3333"
+        if class_name is None:
+            class_name='default'
+        pnt_format = " ".join(["{},-{}".format(*c) for c in linestring.coords])
+        return (
+            '<polyline fill="none" stroke="{2}" stroke-width="{1}" '
+            'points="{0}" class="{3}" opacity="0.8" />'
+        ).format(pnt_format, 2. * scale_factor, stroke_color, class_name)
 
 # print(gpd.__version__)
 # print(fiona.supported_drivers)
@@ -87,7 +93,7 @@ for layer in set(dxf['Layer']):
 for item in dxf.index:
     layer_name = dxf.loc[item]['Layer']
     if layer_name:
-        if layer_name == 'GRASS' or layer_name == 'PARCELS':
+        if layer_name == 'GRASS' or layer_name == 'PARCELS' or layer_name == 'ROAD':
         # if layer_name == 'GRASS':
             obj = loads(str(dxf.loc[item].geometry))
             obj = Polygon(obj)
@@ -128,7 +134,8 @@ for item in points_df.index:
     geometry = points_df.loc[item].geometry
     if len(text) > 4:
         points_geometry_area.append(geometry)
-        points_text_area.append(text)
+        text_rus = text.split(' ')[0]+' м2'
+        points_text_area.append(text_rus)
     else:
         points_geometry_id.append(geometry)
         points_text_id.append(text)
@@ -143,13 +150,14 @@ points_df_area = gpd.GeoDataFrame({'geometry': points_gs_area, 'area': points_gs
 
 # union_obj = gpd.overlay(parcels_df, points_df, how='union')
 # parcels_id = gpd.sjoin(parcels_df, points_df_id).drop(['index_right'], axis='columns')
-parcels_id = gpd.sjoin(parcels_df, points_df_id, how='inner', op='intersects')
+parcels_id = gpd.sjoin(parcels_df, points_df_id, how='inner', op='intersects').drop(['index_right'], axis='columns')
+
+parcels = gpd.sjoin(parcels_id, points_df_area, how='inner', op='intersects').drop(['index_right'], axis='columns')
 # parcels_area = gpd.sjoin(parcels_id, points_df_area)
 # print(parcels_id.drop_duplicates(subset=['id'], keep=False))
 # print(parcels_area)
 
-pol = loads(str(parcels_id.loc[100].geometry))
-print(create_svg_from_polygon(pol))
+# print(parcels.head())
 
 # for i in parcels_id.index:
 #     print(parcels_id.loc[i].geometry)
@@ -163,38 +171,101 @@ print(create_svg_from_polygon(pol))
 # print(union_obj)
 
 svg = list()
+
+for layer in obj_list:
+    if layer == 'ROAD':
+        for obj in obj_list[layer]:
+            svg.append(create_svg_from_polygon(obj, class_name='road'))
+
+
 for layer in obj_list:
     if layer != 'TEXT':
-        if layer == 'PARCELS':
-            pass
+        # if layer == 'ROAD':
+        #     for obj in obj_list[layer]:
+        #         svg.append(create_svg_from_polygon(obj, class_name='road'))
+        if layer == 'GRASS':
             for obj in obj_list[layer]:
-                svg.append(obj.svg())
-        else:
+                svg.append(create_svg_from_polygon(obj, class_name='grass'))
+        elif layer == 'PARCELS':
             for obj in obj_list[layer]:
-                svg.append(obj.svg())
-    else:
-        for obj in obj_list[layer]:
-            # geometry = obj[0]
-            x = float(obj[0].x)
-            y = float(obj[0].y)
-            text = """<text x="%s" y="%s">%s</text>""" %(x,y, obj[1])
-            # svg.append(text)
+                svg.append(create_svg_from_polygon(obj, class_name='parcels'))
+        elif layer == 'AXIS':
+            for obj in obj_list[layer]:
+                svg.append(create_svg_from_linestring(obj, class_name='axis'))
+                # svg.append(obj.svg())
+    # else:
+    #     for obj in obj_list[layer]:
+    #         x = float(obj[0].x)
+    #         y = float(obj[0].y)*-1
+    #         text = """<text x="%s" y="%s">%s</text>""" %(x,y, obj[1])
+    #         svg.append(text)
+
+for i in parcels.index:
+    centroidx = parcels.loc[i].geometry.centroid.x
+    centroidy = parcels.loc[i].geometry.centroid.y*-1
+    id = parcels.loc[i].id
+    area = parcels.loc[i].area
+    line = """<path class="line" d="M%s %s L %s %s"/>""" %(centroidx-5,centroidy, centroidx+5, centroidy)
+    text_id = """<text class="text-id" x="%s" y="%s" >%s</text>""" %(centroidx-5,centroidy-2, id)
+    text_area = """<text class="text-area" x="%s" y="%s" >%s</text>""" %(centroidx-5,centroidy+5, area)
+    svg.append(line)
+    svg.append(text_id)
+    svg.append(text_area)
 
 # viewBox="1382800 493250 900 500"
 # viewBox="1381940 492750 800 450"
-# transform="rotate(180)"
+# viewBox="1381935 -493220 800 450"
+# #e1e1eb
 
 svg_header = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1"
-     viewBox="1381940 492750 800 450"
+     viewBox="1381935 -493220 3850 1950"
      baseProfile="full"
      xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink"
      xmlns:ev="http://www.w3.org/2001/xml-events"
-     width="100%" height="100%">
+     width="400%" height="400%">
+<style>
+    .road{
+        stroke-width: 0.2px;
+        fill: #e1e1eb;
+    }
 
+    .parcels{
+        stroke: #2ee3ba;
+        stroke-width: 0.2px;
+        fill: #ffffeb;
+    }
+
+    .grass{
+        stroke: #8a966e;
+        stroke-width: 0.2px;
+        fill: #b3e3ba;
+    }
+
+    .axis{
+        stroke: #696a69;
+        stroke-dasharray: 20;
+        fill: none;
+        stroke-width: 0.2px;
+    }
+
+    .text-id{
+        font-size: 5px;
+    }
+
+    .text-area{
+        font-size: 3px;
+    }
+
+    .line{
+        stroke: #000000;
+        fill: none;
+        stroke-width: 0.2px;
+    }
+</style>
 """
 
 svg_footer = """\n</svg>"""

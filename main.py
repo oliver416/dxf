@@ -215,62 +215,107 @@ for i in parcels.index:
 # viewBox="1382800 493250 900 500"
 # viewBox="1381940 492750 800 450"
 # viewBox="1381935 -493220 800 450"
-# #e1e1eb
+# < svg
+# version = "1.1"
+# viewBox = "1381935 -493220 3850 1950"
+# baseProfile = "full"
+# xmlns = "http://www.w3.org/2000/svg"
+# xmlns:xlink = "http://www.w3.org/1999/xlink"
+# xmlns:ev = "http://www.w3.org/2001/xml-events"
+# width = "400%"
+# height = "400%" >
 
-svg_header = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
-    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1"
-     viewBox="1381935 -493220 3850 1950"
+svg_header = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>DXF to SVG converter</title>
+    <style>
+        .road{
+            stroke-width: 0.2px;
+            fill: #e1e1eb;
+        }
+
+        .parcels{
+            stroke: #2ee3ba;
+            stroke-width: 0.2px;
+            fill: #ffffeb;
+        }
+
+        .grass{
+            stroke: #8a966e;
+            stroke-width: 0.2px;
+            fill: #b3e3ba;
+        }
+
+        .axis{
+            stroke: #696a69;
+            stroke-dasharray: 2;
+            fill: none;
+            stroke-width: 0.2px;
+        }
+
+        .text-id{
+            font-size: 5px;
+        }
+
+        .text-area{
+            font-size: 3px;
+        }
+
+        .line{
+            stroke: #000000;
+            fill: none;
+            stroke-width: 0.2px;
+        }
+    </style>
+</head>
+<body>
+    <svg version="1.1"
+     viewBox="1381935 -493220 1500 1000"
      baseProfile="full"
      xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink"
      xmlns:ev="http://www.w3.org/2001/xml-events"
-     width="400%" height="400%">
-<style>
-    .road{
-        stroke-width: 0.2px;
-        fill: #e1e1eb;
-    }
-
-    .parcels{
-        stroke: #2ee3ba;
-        stroke-width: 0.2px;
-        fill: #ffffeb;
-    }
-
-    .grass{
-        stroke: #8a966e;
-        stroke-width: 0.2px;
-        fill: #b3e3ba;
-    }
-
-    .axis{
-        stroke: #696a69;
-        stroke-dasharray: 20;
-        fill: none;
-        stroke-width: 0.2px;
-    }
-
-    .text-id{
-        font-size: 5px;
-    }
-
-    .text-area{
-        font-size: 3px;
-    }
-
-    .line{
-        stroke: #000000;
-        fill: none;
-        stroke-width: 0.2px;
-    }
-</style>
+     width="1500" height="1000">
+     <g>
 """
 
-svg_footer = """\n</svg>"""
+svg_footer = """\n</g>
+</svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
 
-file = open('001.svg', 'w')
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+var g = svg.selectAll("g")
+
+svg.append("rect")
+    .attr("fill", "none")
+    .attr("x", "1381935")
+    .attr("y", "-493220")
+    .attr("pointer-events", "all")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("style", "stroke:black")
+    .call(d3.zoom()
+        .scaleExtent([1, 8])
+        .on("zoom", zoom));
+
+function zoom() {
+  g.attr("transform", d3.event.transform);
+}
+
+</script>
+</body>
+</html>
+"""
+
+file = open('index.html', 'w')
 file.write(svg_header)
 for i in svg:
     file.write(i+'\n')

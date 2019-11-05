@@ -9,7 +9,7 @@ import pandas as pd
 
 
 # def create_svg_from_polygon(polygon, scale_factor=1., class_name=None):
-def create_svg_from_polygon(polygon, class_name=None):
+def create_svg_from_polygon(polygon, class_name=None, id_number=None):
     if isinstance(polygon, Polygon):
         if polygon.is_empty:
             return '<g />'
@@ -23,13 +23,14 @@ def create_svg_from_polygon(polygon, class_name=None):
         path = " ".join([
                             "M {} L {} z".format(coords[0], " L ".join(coords[1:]))
                             for coords in exterior_coords + interior_coords])
-        # return (
-        #     '<path fill-rule="evenodd" stroke="#555555" '
-        #     'stroke-width="{0}" class="{2}" opacity="0.6" d="{1}" />'
-        # ).format(2. * scale_factor, path, class_name)
-        return (
-            '<path fill-rule="evenodd" class="{1}" d="{0}" />'
-        ).format(path, class_name)
+        if id_number is None:
+            return (
+                '<path fill-rule="evenodd" class="{1}" d="{0}" />'
+            ).format(path, class_name)
+        else:
+            return (
+                '<path fill-rule="evenodd" class="{1}" id="{2}" d="{0}" />'
+            ).format(path, class_name, id_number)
 
 
 def create_svg_from_linestring(linestring, scale_factor=1., stroke_color=None, class_name=None):
@@ -177,21 +178,35 @@ for layer in obj_list:
         for obj in obj_list[layer]:
             svg.append(create_svg_from_polygon(obj, class_name='road'))
 
+for layer in obj_list:
+    if layer == 'GRASS':
+        for obj in obj_list[layer]:
+            svg.append(create_svg_from_polygon(obj, class_name='grass'))
 
 for layer in obj_list:
-    if layer != 'TEXT':
-        # if layer == 'ROAD':
-        #     for obj in obj_list[layer]:
-        #         svg.append(create_svg_from_polygon(obj, class_name='road'))
-        if layer == 'GRASS':
-            for obj in obj_list[layer]:
-                svg.append(create_svg_from_polygon(obj, class_name='grass'))
-        elif layer == 'PARCELS':
-            for obj in obj_list[layer]:
-                svg.append(create_svg_from_polygon(obj, class_name='parcels'))
-        elif layer == 'AXIS':
-            for obj in obj_list[layer]:
-                svg.append(create_svg_from_linestring(obj, class_name='axis'))
+    if layer == 'PARCELS':
+        i=0
+        for obj in obj_list[layer]:
+            svg.append(create_svg_from_polygon(obj, class_name='parcels', id_number=i))
+            i+=1 # TODO: Жуткий костыль!!
+
+for layer in obj_list:
+    if layer == 'AXIS':
+        for obj in obj_list[layer]:
+            svg.append(create_svg_from_linestring(obj, class_name='axis'))
+
+
+# for layer in obj_list:
+#     if layer != 'TEXT':
+#         if layer == 'GRASS':
+#             for obj in obj_list[layer]:
+#                 svg.append(create_svg_from_polygon(obj, class_name='grass'))
+#         elif layer == 'PARCELS':
+#             for obj in obj_list[layer]:
+#                 svg.append(create_svg_from_polygon(obj, class_name='parcels'))
+#         elif layer == 'AXIS':
+#             for obj in obj_list[layer]:
+#                 svg.append(create_svg_from_linestring(obj, class_name='axis'))
                 # svg.append(obj.svg())
     # else:
     #     for obj in obj_list[layer]:

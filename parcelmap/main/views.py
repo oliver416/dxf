@@ -1,17 +1,19 @@
 import shutil, os
 import pandas as pd
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseServerError
 from django.template import loader
 from django.core.files.storage import FileSystemStorage
+from django.contrib.auth.decorators import login_required
 from .converter.dxf import read_dxf
 from .converter.excel import read_excel
 from .models import Parcel
 
+@login_required
 def index(request):
     return render(request, 'main/index.html')
 
-
+@login_required
 def upload_dxf(request):
     os.mkdir('./media')
 
@@ -22,12 +24,13 @@ def upload_dxf(request):
     fs = FileSystemStorage()
     name = fs.save('./media/'+uploaded_file.name, uploaded_file)
     url = fs.url(name)
-    read_dxf(url, 'main/templates/main/upload.html')
+    dxf_variables = read_dxf(url, 'main/templates/main/upload.html')
+    print(dxf_variables)
 
     shutil.rmtree('./media')
-    return render(request, 'main/upload.html')
+    return render(request, 'main/show.html', {"parcel_data": dxf_variables['parcel_data'], "svg": dxf_variables['svg']})
 
-
+@login_required
 def upload_excel(request):
     os.mkdir('./media')
 
@@ -63,3 +66,7 @@ def upload_excel(request):
     shutil.rmtree('./media') # TODO: russian file names
 
     return render(request, 'main/test.html', {'var': 'Done'})
+
+# @login_required
+def test_page(request):
+    return render(request, 'main/show.html', {'var': 'Show page'})

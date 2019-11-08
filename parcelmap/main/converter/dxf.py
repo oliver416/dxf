@@ -368,4 +368,4 @@ def read_dxf(file_path, result_path):
     file.write(svg_footer)
     file.close()
 
-    return
+    return {"parcel_data": parcel_data, "svg": svg}

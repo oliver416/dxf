@@ -2,10 +2,10 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import fiona
 import svgwrite
+import pandas as pd
 from shapely.ops import transform
 from shapely.wkt import loads
 from shapely.geometry import Polygon, LineString
-import pandas as pd
 
 
 # def create_svg_from_polygon(polygon, scale_factor=1., class_name=None):
@@ -153,23 +153,20 @@ points_df_area = gpd.GeoDataFrame({'geometry': points_gs_area, 'area': points_gs
 # parcels_id = gpd.sjoin(parcels_df, points_df_id).drop(['index_right'], axis='columns')
 parcels_id = gpd.sjoin(parcels_df, points_df_id, how='inner', op='intersects').drop(['index_right'], axis='columns')
 
-parcels = gpd.sjoin(parcels_id, points_df_area, how='inner', op='intersects').drop(['index_right'], axis='columns')
-# parcels_area = gpd.sjoin(parcels_id, points_df_area)
-# print(parcels_id.drop_duplicates(subset=['id'], keep=False))
-# print(parcels_area)
+parcels_area = gpd.sjoin(parcels_id, points_df_area, how='inner', op='intersects').drop(['index_right'], axis='columns')
 
-# print(parcels.head())
+parcels = pd.merge(parcels_id, parcels_area, on='id', how='outer').drop(['geometry_y'], axis='columns').rename(columns={'geometry_x': 'geometry'})
 
-# for i in parcels_id.index:
-#     print(parcels_id.loc[i].geometry)
-# print(parcels_id.loc[160])
-
-# print(union_obj)
-# print(points_df)
-
-# print(points_df)
-# print(parcels_df)
-# print(union_obj)
+parcel_data = dict()
+for parcel in parcels.index:
+    pid = parcels.loc[parcel].id
+    area = parcels.loc[parcel].area
+    parcel_data[pid] = dict()
+    parcel_data[pid]['area'] = area
+    if isinstance(area, str):
+        parcel_data[pid]['saled'] = False
+    else:
+        parcel_data[pid]['saled'] = True
 
 svg = list()
 
@@ -183,12 +180,12 @@ for layer in obj_list:
         for obj in obj_list[layer]:
             svg.append(create_svg_from_polygon(obj, class_name='grass'))
 
-for layer in obj_list:
-    if layer == 'PARCELS':
-        i=0
-        for obj in obj_list[layer]:
-            svg.append(create_svg_from_polygon(obj, class_name='parcels', id_number=i))
-            i+=1 # TODO: Жуткий костыль!!
+for i in parcels.index:
+    area = parcels.loc[i].area
+    if isinstance(area, str):
+        svg.append(create_svg_from_polygon(parcels_id.loc[i].geometry, class_name='parcels parcels-free', id_number=parcels_id.loc[i].id))
+    else:
+        svg.append(create_svg_from_polygon(parcels_id.loc[i].geometry, class_name='parcels parcels-saled', id_number=parcels_id.loc[i].id))
 
 for layer in obj_list:
     if layer == 'AXIS':
@@ -223,9 +220,10 @@ for i in parcels.index:
     line = """<path class="line" d="M%s %s L %s %s"/>""" %(centroidx-5,centroidy, centroidx+5, centroidy)
     text_id = """<text class="text-id" x="%s" y="%s" >%s</text>""" %(centroidx-5,centroidy-2, id)
     text_area = """<text class="text-area" x="%s" y="%s" >%s</text>""" %(centroidx-5,centroidy+5, area)
-    svg.append(line)
+    if isinstance(area, str):
+        svg.append(line)
+        svg.append(text_area)
     svg.append(text_id)
-    svg.append(text_area)
 
 # viewBox="1382800 493250 900 500"
 # viewBox="1381940 492750 800 450"
@@ -256,7 +254,18 @@ svg_header = """<!DOCTYPE html>
         .parcels{
             stroke: #2ee3ba;
             stroke-width: 0.2px;
+        }
+
+        .parcels-saled{
+            fill: #fee6e9;
+        }
+
+        .parcels-free{
             fill: #ffffeb;
+        }
+
+        .parcels:hover{
+            fill: rgba(55,55,55,0.4);
         }
 
         .grass{
@@ -285,6 +294,47 @@ svg_header = """<!DOCTYPE html>
             fill: none;
             stroke-width: 0.2px;
         }
+
+        .onpopup{
+            width: 100px;
+            height: 100px;
+            background-color: red;
+            position: relative;
+            width: 120px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            font-family: sans-serif;
+            font-size: 16px;
+            padding: 10px;
+            padding-left: 10px;
+            padding-left: 15px;
+            border-radius: 10px;
+            z-index: 1;
+            max-height: 130px;
+            overflow: hidden;
+            background-color:
+            #d7d7e1;
+            border: 2px solid
+            #3283ba;
+            border-radius: 10px;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .onpopup .saled{
+            color: #e82100;
+        }
+
+        .onpopup .free{
+            color: #008000;
+        }
+
+        svg{
+            border-style: solid;
+            border-color: black;
+            border-width: 1px;
+            position: absolute;
+        }
     </style>
 </head>
 <body>
@@ -300,24 +350,17 @@ svg_header = """<!DOCTYPE html>
 
 svg_footer = """\n</g>
 </svg>
+<div id="popup"></div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
-var svg = d3.select("svg"),
+let svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height");
 
-var g = svg.selectAll("g")
+let g = svg.selectAll("g")
 
-svg.append("rect")
-    .attr("fill", "none")
-    .attr("x", "1381935")
-    .attr("y", "-493220")
-    .attr("pointer-events", "all")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("style", "stroke:black")
-    .call(d3.zoom()
+svg.call(d3.zoom()
         .scaleExtent([1, 8])
         .on("zoom", zoom));
 
@@ -325,10 +368,52 @@ function zoom() {
   g.attr("transform", d3.event.transform);
 }
 
+let parcels = document.querySelectorAll('.parcels').forEach(
+    function(item){
+        item.addEventListener('mouseenter', onMouseEnter);
+        item.addEventListener('mouseleave', onMouseLeave);
+    }
+);
+
+let popup = document.getElementById("popup");
+
+const nan = NaN;
+const True = true;
+const False = false;
+let parcel_data = %s;
+
+function onMouseEnter(e){
+    let id = e.target.id;
+    let area = parcel_data[id]['area'];
+    let saled;
+
+    if (parcel_data[id]['saled'] == true){
+        saled = 'Продан';
+    }else{
+        saled = 'Свободен';
+    }
+
+    popup.classList.add("onpopup");
+
+    if (typeof area == 'number'){
+        popup.innerHTML='Участок №'+id+' '+'<span class="saled">'+saled+'</span>';
+    }else{
+        popup.innerHTML='Участок №'+id+' '+area+' '+'<span class="free">'+saled+'</span>';
+    }
+
+    popup.style.left=e.pageX+"px";
+    popup.style.top=e.pageY+"px";
+}
+
+function onMouseLeave(e){
+    popup.classList.remove("onpopup");
+    popup.innerText='';
+}
+
 </script>
 </body>
 </html>
-"""
+""" % parcel_data
 
 file = open('index.html', 'w')
 file.write(svg_header)

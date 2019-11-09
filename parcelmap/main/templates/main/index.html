@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Загрузка файлов') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><div>{{ site_header|default:_('Загрузка файлов') }}</div></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{{ 'Редактировать базу данных земельных участков' }}</a>
+    {% if title %} &rsaquo; {{ title }}{% endif %}
+    </div>
+{% endblock %}
+
+{% block content %}
+<div id="content">
+    <form action="/test/" method="post" enctype="multipart/form-data">{% csrf_token %}
+        <p>Выберите файл Excel</p>
+        <input name="xls" type="file">
+        <button type="submit">Загрузить в базу данных</button>
+    </form>
+    <br>
+    <form action="/show/" method="post" enctype="multipart/form-data">{% csrf_token %}
+        <p>Выберите файл DXF</p>
+        <input name="dxf" type="file">
+        <button type="submit">Создать HTML</button>
+    </form>
+    <br>
+    <form action="/show/" method="post" enctype="multipart/form-data">{% csrf_token %}
+        <button type="submit">Test</button>
+    </form>
+</div>
+{% endblock %}

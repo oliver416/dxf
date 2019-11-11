@@ -172,6 +172,9 @@ def read_dxf(file_path, result_path):
     # TODO: svg header
     # TODO: download d3 js
     # TODO: render dxf after xls
+    # TODO: шрифты svg
+    # TODO: настройки выходного html - язык, заголовок и пр.
+    # TODO: забронированные участки - другим цветом??
 
     svg_header = """<!DOCTYPE html>
     <html lang="en">
@@ -181,6 +184,10 @@ def read_dxf(file_path, result_path):
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>DXF to SVG converter</title>
         <style>
+            body {
+                overflow: hidden;
+            }
+
             .road{
                 stroke-width: 0.2px;
                 fill: #e1e1eb;
@@ -275,9 +282,6 @@ def read_dxf(file_path, result_path):
             }
 
             svg{
-                border-style: solid;
-                border-color: black;
-                border-width: 1px;
                 position: absolute;
             }
         </style>
@@ -368,4 +372,5 @@ def read_dxf(file_path, result_path):
     file.write(svg_footer)
     file.close()
 
-    return {"parcel_data": parcel_data, "svg": svg}
+    # return {"parcel_data": parcel_data, "svg": svg}
+    return

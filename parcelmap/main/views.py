@@ -1,7 +1,7 @@
 import shutil, os
 import pandas as pd
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseServerError, Http404
 from django.template import loader
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
@@ -24,11 +24,12 @@ def upload_dxf(request):
     fs = FileSystemStorage()
     name = fs.save('./media/'+uploaded_file.name, uploaded_file)
     url = fs.url(name)
-    dxf_variables = read_dxf(url, 'main/templates/main/upload.html')
-    print(dxf_variables)
+    # dxf_variables = read_dxf(url, 'main/templates/main/result.html')
+    read_dxf(url, 'main/templates/main/result.html')
 
     shutil.rmtree('./media')
-    return render(request, 'main/show.html', {"parcel_data": dxf_variables['parcel_data'], "svg": dxf_variables['svg']})
+    # return render(request, 'main/show.html', {"parcel_data": dxf_variables['parcel_data'], "svg": dxf_variables['svg']})
+    return render(request, 'main/show_result.html')
 
 @login_required
 def upload_excel(request):
@@ -65,8 +66,24 @@ def upload_excel(request):
 
     shutil.rmtree('./media') # TODO: russian file names
 
-    return render(request, 'main/test.html', {'var': 'Done'})
+    # TODO: FileExistsError at /show_result/
 
-# @login_required
-def test_page(request):
-    return render(request, 'main/show.html', {'var': 'Show page'})
+    return render(request, 'main/excel.html', {'var': 'Done'})
+
+
+@login_required
+def result(request):
+    return render(request, 'main/result.html')
+
+
+@login_required
+def save_result(request):
+    file_path = 'main/templates/main/result.html'
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as file:
+            response = HttpResponse(file.read(), content_type="text/html")
+            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
+            return response
+            # return render(request, 'main/save.html')
+    # raise Http404
+    return render(request, 'main/save.html')

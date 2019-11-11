@@ -9,10 +9,11 @@ urlpatterns = [
     # path('', admin.site.urls),
     # url(r'^$', include('django.contrib.auth.urls')),
     # path('upload/', views.upload_dxf),
-    url('show/', views.upload_dxf),
+    url('show_result/', views.upload_dxf),
+    url('result/', views.result),
+    url('save/', views.save_result),
     path('excel/', views.upload_excel),
     # url('show/', views.test_page, name='show'),
-    url('show2/', RedirectView.as_view(url='/')),
 ]
 
 # from django.core.urlresolvers import reverse

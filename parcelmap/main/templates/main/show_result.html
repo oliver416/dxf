@@ -1,6 +1,6 @@
 {% extends "admin/base.html" %}
 
-{% block title %}{{ title }} | {{ site_title|default:_('Файл загружен') }}{% endblock %}
+{% block title %}{{ title }} | {{ site_title|default:_('Сохранение файла') }}{% endblock %}
 
 {% block extrastyle %}
 <style>
@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block branding %}
-<h1 id="site-name"><div>{{ site_header|default:_('Загрузка файлов') }}</div></h1>
+<h1 id="site-name"><div>{{ site_header|default:_('Сохранение файла') }}</div></h1>
 {% endblock %}
 
 {% block nav-global %}{% endblock %}

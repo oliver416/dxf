@@ -2,6 +2,14 @@
 
 {% block title %}{{ title }} | {{ site_title|default:_('Загрузка файлов') }}{% endblock %}
 
+{% block extrahead %}
+    <style>
+        input {
+           /* display: none;*/
+        }
+    </style>
+{% endblock %}
+
 {% block branding %}
 <h1 id="site-name"><div>{{ site_header|default:_('Загрузка файлов') }}</div></h1>
 {% endblock %}
@@ -17,16 +25,20 @@
 
 {% block content %}
 <div id="content">
+    <div>В базе данных {{ count_rows }} записей</div>
+    <br>
     <form action="/excel/" method="post" enctype="multipart/form-data">{% csrf_token %}
         <p>Выберите файл Excel</p>
-        <input name="xls" type="file">
+        <input name="xls" type="file" id="xls">
+        <!-- <label for="xls">Открыть...</label> -->
         <button type="submit">Загрузить в базу данных</button>
     </form>
     <br>
     <form action="/show_result/" method="post" enctype="multipart/form-data">{% csrf_token %}
         <p>Выберите файл DXF</p>
-        <input name="dxf" type="file">
-        <button type="submit">Создать HTML</button>
+        <input name="dxf" type="file" id="dxf">
+        <!-- <label for="xls">Открыть...</label> -->
+        <button {% if count_rows != 0 %} enabled {% else %} disabled {% endif %} type="submit">Создать HTML</button>
     </form>
 </div>
 {% endblock %}

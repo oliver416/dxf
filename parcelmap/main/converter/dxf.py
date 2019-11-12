@@ -1,5 +1,6 @@
 import geopandas as gpd
 import pandas as pd
+from math import ceil
 from shapely.wkt import loads
 from shapely.geometry import Polygon, LineString
 from ..models import Parcel
@@ -46,6 +47,10 @@ def create_svg_from_linestring(linestring, scale_factor=1., stroke_color=None, c
 
 def read_dxf(file_path, result_path):
     dxf = gpd.read_file(file_path)
+
+    bounds = dxf.total_bounds
+    boundx = ceil(bounds[0])
+    boundy = ceil(bounds[3])
 
     obj_list = {}
     for layer in set(dxf['Layer']):
@@ -120,16 +125,6 @@ def read_dxf(file_path, result_path):
         parcel_data[pid]['status'] = status
         parcel_data[pid]['price'] = price
 
-    # for parcel in parcels.index:
-    #     pid = parcels.loc[parcel].id
-    #     area = parcels.loc[parcel].area
-    #     parcel_data[pid] = dict()
-    #     parcel_data[pid]['area'] = area
-    #     if isinstance(area, str):
-    #         parcel_data[pid]['saled'] = False
-    #     else:
-    #         parcel_data[pid]['saled'] = True
-
     svg = list() #TODO: choose layers
 
     for layer in obj_list:
@@ -143,11 +138,13 @@ def read_dxf(file_path, result_path):
                 svg.append(create_svg_from_polygon(obj, class_name='grass'))
 
     for i in parcels.index:
-        area = parcels.loc[i].area
-        if isinstance(area, str):
+        pid = int(parcels_id.loc[i].id)
+        if parcel_data[pid]['status'] == 'Free':
             svg.append(create_svg_from_polygon(parcels_id.loc[i].geometry, class_name='parcels parcels-free', id_number=parcels_id.loc[i].id))
-        else:
+        elif parcel_data[pid]['status'] == 'Sold':
             svg.append(create_svg_from_polygon(parcels_id.loc[i].geometry, class_name='parcels parcels-sold', id_number=parcels_id.loc[i].id))
+        else:
+            svg.append(create_svg_from_polygon(parcels_id.loc[i].geometry, class_name='parcels parcels-booked', id_number=parcels_id.loc[i].id))
 
     for layer in obj_list:
         if layer == 'AXIS':
@@ -168,21 +165,20 @@ def read_dxf(file_path, result_path):
             svg.append(text_area)
         svg.append(text_id)
 
-    # TODO: magic viewbox
-    # TODO: svg header
+    # TODO: svg header (height, width)
     # TODO: download d3 js
-    # TODO: render dxf after xls
+    # TODO: render dxf after xls (в БД столько-то участков)
     # TODO: шрифты svg
-    # TODO: настройки выходного html - язык, заголовок и пр.
-    # TODO: забронированные участки - другим цветом??
+    # TODO: проверки на названия слоев dxf и колонок xls
+
 
     svg_header = """<!DOCTYPE html>
-    <html lang="en">
+    <html lang="ru">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <title>DXF to SVG converter</title>
+        <title>Земельные участки</title>
         <style>
             body {
                 overflow: hidden;
@@ -207,7 +203,7 @@ def read_dxf(file_path, result_path):
             }
 
             .parcels-booked{
-                fill: #9c9c95;
+                fill: #ffe300;
             }
 
             .parcels:hover{
@@ -288,14 +284,10 @@ def read_dxf(file_path, result_path):
     </head>
     <body>
         <svg version="1.1"
-         viewBox="1381935 -493220 1500 1000"
-         baseProfile="full"
-         xmlns="http://www.w3.org/2000/svg"
-         xmlns:xlink="http://www.w3.org/1999/xlink"
-         xmlns:ev="http://www.w3.org/2001/xml-events"
+         viewBox="%s -%s 1500 1000"
          width="1500" height="1000">
          <g>
-    """
+    """ % (str(boundx), str(boundy))
 
     svg_footer = """\n</g>
     </svg>
@@ -372,5 +364,4 @@ def read_dxf(file_path, result_path):
     file.write(svg_footer)
     file.close()
 
-    # return {"parcel_data": parcel_data, "svg": svg}
     return

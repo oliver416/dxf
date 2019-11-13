@@ -7,7 +7,8 @@ from .converter.dxf import read_dxf
 from .converter.excel import read_excel
 from .models import Parcel
 
-MEDIA_DIR = './media'
+MEDIA_DIR = './media/'
+# MEDIA_DIR = './media'
 RESULT_PATH = 'main/templates/main/result.html'
 
 
@@ -20,17 +21,24 @@ def index(request):
 def upload_dxf(request):
     try:
         if request.method == 'POST':
+            if not request.FILES:
+                return HttpResponseServerError('Файл не выбран')
             uploaded_file = request.FILES['dxf']
+            if uploaded_file.name.split('.')[1] != 'dxf':
+                return HttpResponseServerError('Неверный формат файла')
         else:
-            return HttpResponseServerError('Неверный тип запроса') # TODO: file type check
-        fs = FileSystemStorage() # TODO: file empty check
-        path = MEDIA_DIR + uploaded_file.name # TODO: columns check
+            return HttpResponseServerError('Неверный тип запроса')
+        fs = FileSystemStorage()
+        # path = MEDIA_DIR + '/' + uploaded_file.name
+        path = MEDIA_DIR
         if os.path.exists(path):
-            name = fs.save(path, uploaded_file)
+            # name = fs.save(path, uploaded_file)
+            name = fs.save(path+uploaded_file.name, uploaded_file)
         else:
             return HttpResponseServerError('Загруженный файл не существует')
-        url = fs.url(name)
-        read_dxf(url, RESULT_PATH)
+        # url = fs.url(name)
+        # read_dxf(url, RESULT_PATH)
+        read_dxf(name, RESULT_PATH)
     except Exception as e:
         return HttpResponseServerError('Ошибка загрузки DXF: '+ str(type(e).__name__) + ' ' + str(e))
     finally:
@@ -42,17 +50,24 @@ def upload_dxf(request):
 def upload_excel(request):
     try:
         if request.method == 'POST':
+            if not request.FILES:
+                return HttpResponseServerError('Файл не выбран')
             uploaded_file = request.FILES['xls']
+            if uploaded_file.name.split('.')[1] not in ['xls', 'xlsx', 'xlsm']:
+                return HttpResponseServerError('Неверный формат файла')
         else:
             return HttpResponseServerError('Неверный тип запроса')
         fs = FileSystemStorage()
-        path = MEDIA_DIR + uploaded_file.name
+        # path = MEDIA_DIR + uploaded_file.name
+        path = MEDIA_DIR
         if os.path.exists(path):
-            name = fs.save(path, uploaded_file)
+            # name = fs.save(path, uploaded_file)
+            name = fs.save(path+uploaded_file.name, uploaded_file)
         else:
-            return HttpResponseServerError('Загруженный файл не существует проверьте формат файла')
+            return HttpResponseServerError('Загруженный файл не существует')
         url = fs.url(name)
-        excel = read_excel(url)
+        # excel = read_excel(url)
+        excel = read_excel(name)
 
         Parcel.objects.all().delete()
 
@@ -82,8 +97,8 @@ def upload_excel(request):
     finally:
         shutil.rmtree(MEDIA_DIR)
         os.mkdir(MEDIA_DIR)
-    # TODO: FileExistsError at /show_result/
     # TODO: add spinner (xls)
+    # TODO: add calculator
 
     return render(request, 'main/excel.html')
 

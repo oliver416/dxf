@@ -4,13 +4,10 @@
 
 {% block extrastyle %}
 <style>
-    body {
-        overflow: hidden;
-    }
-
     iframe {
-        height: 500px;
-        width: 1000px;
+        min-height: 1000px;
+        width: 100%;
+        border-width: 1px;
     }
 </style>
 {% endblock %}
@@ -29,10 +26,10 @@
 {% endblock %}
 
 {% block content%}
-<iframe src="/result/"></iframe>
-<br>
-<br>
 <form action="/save/" method="get" enctype="multipart/form-data">{% csrf_token %}
     <button type="submit">Сохранить файл HTML</button>
 </form>
+<br>
+<br>
+<iframe src="/result/"></iframe>
 {% endblock %}

@@ -25,7 +25,7 @@
 
 {% block content %}
 <div id="content">
-    <div>В базе данных {{ count_rows }} записей</div>
+    <div>В базе данных <b>{{ count_rows }}</b> записей</div>
     <br>
     <form action="/excel/" method="post" enctype="multipart/form-data">{% csrf_token %}
         <p>Выберите файл Excel</p>

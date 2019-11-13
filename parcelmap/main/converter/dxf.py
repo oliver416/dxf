@@ -165,9 +165,6 @@ def read_dxf(file_path, result_path):
             svg.append(text_area)
         svg.append(text_id)
 
-    # TODO: svg header (height, width)
-    # TODO: download d3 js
-    # TODO: render dxf after xls (в БД столько-то участков)
     # TODO: шрифты svg
     # TODO: проверки на названия слоев dxf и колонок xls
 
@@ -181,7 +178,7 @@ def read_dxf(file_path, result_path):
         <title>Земельные участки</title>
         <style>
             body {
-                overflow: hidden;
+                margin: 0;
             }
 
             .road{
@@ -279,13 +276,14 @@ def read_dxf(file_path, result_path):
 
             svg{
                 position: absolute;
+                width: 100%%;
+                height: 1000px;
             }
         </style>
     </head>
     <body>
         <svg version="1.1"
-         viewBox="%s -%s 1500 1000"
-         width="1500" height="1000">
+         viewBox="%s -%s 770 400">
          <g>
     """ % (str(boundx), str(boundy))
 

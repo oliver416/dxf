@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseServerError, Http404
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from .converter.dxf import read_dxf
 from .converter.excel import read_excel
 from .models import Parcel
@@ -98,7 +99,6 @@ def upload_excel(request):
         shutil.rmtree(MEDIA_DIR)
         os.mkdir(MEDIA_DIR)
     # TODO: add spinner (xls)
-    # TODO: add calculator
 
     return render(request, 'main/excel.html')
 
@@ -117,3 +117,8 @@ def save_result(request):
             response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
             return response
     raise Http404
+
+@login_required
+def get_base_count(request):
+    count = len(Parcel.objects.all())
+    return JsonResponse({'parcels_count': count})

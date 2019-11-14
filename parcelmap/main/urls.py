@@ -13,6 +13,7 @@ urlpatterns = [
     url('result/', views.result),
     url('save/', views.save_result),
     path('excel/', views.upload_excel),
+    url('get_base_count/', views.get_base_count)
     # url('show/', views.test_page, name='show'),
 ]
 

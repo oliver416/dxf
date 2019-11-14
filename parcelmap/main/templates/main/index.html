@@ -7,6 +7,12 @@
         input {
            /* display: none;*/
         }
+
+        .progressbar{
+            background-color: #79aec8;
+            height: 24px;
+            width: 0%;
+        }
     </style>
 {% endblock %}
 
@@ -40,5 +46,40 @@
         <!-- <label for="xls">Открыть...</label> -->
         <button {% if count_rows != 0 %} enabled {% else %} disabled {% endif %} type="submit">Создать HTML</button>
     </form>
+    <br>
+    <button id="but">Click</button>
+    <div class="progressbar"></div>
 </div>
 {% endblock %}
+
+{% block footer %}<div id="footer"></div>
+<script>
+    let button = document.getElementById('but')
+    button.addEventListener('click', onClick)
+
+    function onClick(){
+        //setInterval(() => console.log(get_count()), 3000)
+        console.log(get_count())
+    }
+
+    function get_count(){
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/get_base_count/", true);
+        xhr.onload = function (e) {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              console.log(xhr.responseText);
+            } else {
+              console.error(xhr.statusText);
+            }
+          }
+        };
+        xhr.onerror = function (e) {
+          console.error(xhr.statusText);
+        };
+        xhr.send(null);
+    }
+</script>
+{% endblock %}
+<!--{% load staticfiles %}-->
+<!--<script src="{% static 'js/app.js' %}"></script>-->

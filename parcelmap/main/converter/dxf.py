@@ -91,13 +91,12 @@ def read_dxf(file_path, result_path):
     for item in points_df.index:
         text = points_df.loc[item].text
         geometry = points_df.loc[item].geometry
-        if len(text) > 4:
-            points_geometry_area.append(geometry)
-            text_rus = text.split(' ')[0]+' м2'
-            points_text_area.append(text_rus)
-        else:
-            points_geometry_id.append(geometry)
-            points_text_id.append(text)
+
+        points_geometry_id.append(geometry)
+        points_text_id.append(text)
+
+        points_text_area.append(str(Parcel.objects.get(parcel_id=int(text)).area))
+        points_geometry_area.append(geometry)
 
     points_gs_id = gpd.GeoSeries(points_geometry_id)
     points_gs_id_text = pd.Series(points_text_id)
@@ -156,13 +155,12 @@ def read_dxf(file_path, result_path):
         centroidx = parcels.loc[i].geometry.centroid.x
         centroidy = parcels.loc[i].geometry.centroid.y*-1
         id = parcels.loc[i].id
-        area = parcels.loc[i].area
+        area = int(parcel_data[int(id)]['area'])
         line = """<path class="line" d="M%s %s L %s %s"/>""" %(centroidx-5,centroidy, centroidx+5, centroidy)
         text_id = """<text class="text-id" x="%s" y="%s" >%s</text>""" %(centroidx-5,centroidy-2, id)
-        text_area = """<text class="text-area" x="%s" y="%s" >%s</text>""" %(centroidx-5,centroidy+5, area)
-        if isinstance(area, str):
-            svg.append(line)
-            svg.append(text_area)
+        text_area = """<text class="text-area" x="%s" y="%s" >%s м<tspan class="square" dy ="-1">2</tspan></text>""" %(centroidx-5,centroidy+5, area)
+        svg.append(line)
+        svg.append(text_area)
         svg.append(text_id)
 
     svg_header = """<!DOCTYPE html>
@@ -223,6 +221,11 @@ def read_dxf(file_path, result_path):
 
             .text-area{
                 font-size: 3px;
+                cursor: default;
+            }
+
+            .square{
+                font-size: 2px;
                 cursor: default;
             }
 

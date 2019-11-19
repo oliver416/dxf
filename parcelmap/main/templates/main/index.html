@@ -10,13 +10,13 @@
 
         .progressbar{
             background-color: #79aec8;
-            height: 24px;
+            height: 8px;
             width: 0%;
         }
 
         .progressbar-bg{
             background-color: #f1f1f1;
-            height: 24px;
+            height: 8px;
             width: 100%;
         }
     </style>
@@ -82,7 +82,10 @@
 
         function excelCallback(data){
           var interval = setInterval(excelCount, 1000);
-          saveExcelDb(()=>{clearInterval(interval)});
+          saveExcelDb(()=>{
+            clearInterval(interval);
+            window.location.reload(true);
+          });
 
           function excelCount(){
             return getExcelCount((data)=>{

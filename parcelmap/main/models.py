@@ -25,3 +25,7 @@ class Parcel(models.Model):
     class Meta:
         verbose_name = 'Участок'
         verbose_name_plural = 'Участки'
+
+class Excel(models.Model):
+    count_rows = models.IntegerField(blank=True)
+    path = models.CharField(blank=True, max_length=200)

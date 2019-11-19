@@ -125,7 +125,7 @@ def read_dxf(file_path, result_path):
         parcel_data[pid]['status'] = status
         parcel_data[pid]['price'] = price
 
-    svg = list() #TODO: choose layers
+    svg = list()
 
     for layer in obj_list:
         if layer == 'ROAD':
@@ -164,10 +164,6 @@ def read_dxf(file_path, result_path):
             svg.append(line)
             svg.append(text_area)
         svg.append(text_id)
-
-    # TODO: шрифты svg
-    # TODO: проверки на названия слоев dxf и колонок xls
-
 
     svg_header = """<!DOCTYPE html>
     <html lang="ru">
@@ -260,6 +256,7 @@ def read_dxf(file_path, result_path):
                 border-radius: 10px;
                 font-weight: 500;
                 text-align: left;
+                box-sizing: unset;
             }
 
             .onpopup .sold{

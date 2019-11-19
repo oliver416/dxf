@@ -2,6 +2,26 @@
 
 {% block title %}{{ title }} | {{ site_title|default:_('Загрузка файлов') }}{% endblock %}
 
+{% block extrahead %}
+    <style>
+        .excel-form {
+          display: inline;
+        }
+
+        .progressbar{
+            background-color: #79aec8;
+            height: 8px;
+            width: 0%;
+        }
+
+        .progressbar-bg{
+            background-color: #f1f1f1;
+            height: 8px;
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+
 {% block branding %}
 <h1 id="site-name"><div>{{ site_header|default:_('Загрузка файлов') }}</div></h1>
 {% endblock %}
@@ -17,20 +37,117 @@
 
 {% block content %}
 <div id="content">
-    <form action="/test/" method="post" enctype="multipart/form-data">{% csrf_token %}
-        <p>Выберите файл Excel</p>
-        <input name="xls" type="file">
-        <button type="submit">Загрузить в базу данных</button>
-    </form>
+    <div>В базе данных <b>{{ count_rows }}</b> записей</div>
     <br>
-    <form action="/show/" method="post" enctype="multipart/form-data">{% csrf_token %}
+    <div>
+        <form class="excel-form" action="/excel/" method="post" enctype="multipart/form-data">{% csrf_token %}
+          <p>Выберите файл Excel</p>
+          <input name="xls" type="file" id="xls">
+        </form>
+      <button id="loaddb">Загрузить в базу данных</button>
+    </div>
+    <br>
+    <form action="/show_result/" method="post" enctype="multipart/form-data">{% csrf_token %}
         <p>Выберите файл DXF</p>
-        <input name="dxf" type="file">
-        <button type="submit">Создать HTML</button>
+        <input name="dxf" type="file" id="dxf">
+        <button {% if count_rows != 0 %} enabled {% else %} disabled {% endif %} type="submit">Создать HTML</button>
     </form>
     <br>
-    <form action="/show/" method="post" enctype="multipart/form-data">{% csrf_token %}
-        <button type="submit">Test</button>
-    </form>
+    <br>
+    <br>
+    <div class="progressbar-bg">
+      <div id="progressbar" class="progressbar"></div>
+    </div>
 </div>
+{% endblock %}
+
+{% block footer %}<div id="footer"></div>
+<script>
+    let loaddb = document.getElementById('loaddb');
+    loaddb.addEventListener('click', onClick);
+
+    function onClick(){
+        saveExcel(excelCallback);
+
+        function addProgess(width){
+          var elem = document.getElementById("progressbar");
+          if (width <= 1){
+            elem.style.width = width*100 + '%'; 
+          }else{
+            elem.style.width = '100%'; 
+            return
+          }
+
+        }
+
+        function excelCallback(data){
+          var interval = setInterval(excelCount, 1000);
+          saveExcelDb(()=>{
+            clearInterval(interval);
+            window.location.reload(true);
+          });
+
+          function excelCount(){
+            return getExcelCount((data)=>{
+              addProgess(data);
+              });
+          }
+        }
+
+        function saveExcel(callback){
+          var file = document.getElementById("xls").files[0];  
+          var xhr = new XMLHttpRequest();
+          var formData = new FormData();
+          xhr.addEventListener("load", function (e) {
+              if (xhr.status === 200){
+                  return callback(JSON.parse(xhr.response))
+              }else {
+                  return 'Error'
+              }
+          });
+          formData.append("file", file);
+          xhr.open("POST", '/excel/', true);
+          xhr.send(formData);
+        }
+        
+        function getExcelCount(callback){
+          var xhr = new XMLHttpRequest();
+          xhr.open("GET", "/get_count_excel/", true);
+          xhr.onload = function (e) {
+            if (xhr.readyState === 4) {
+              if (xhr.status === 200) {
+                countExcelRows = JSON.parse(xhr.response)['count'];
+                return callback(countExcelRows)
+              } else {
+                return
+              }
+            }
+          };
+          xhr.onerror = function (e) {
+            return
+          };
+          xhr.send(null);
+        }
+
+        function saveExcelDb(callback){
+          var xhr = new XMLHttpRequest();
+          xhr.open("GET", "/save_excel_db/", true);
+          xhr.onload = function (e) {
+            if (xhr.readyState === 4) {
+              if (xhr.status === 200) {
+                return callback()
+              } else {
+                return
+              }
+            }
+          };
+          xhr.onerror = function (e) {
+            return
+          };
+          xhr.send(null);
+        }
+
+    }
+    
+</script>
 {% endblock %}

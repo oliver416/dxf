@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Сохранение файла') }}{% endblock %}
+
+{% block extrastyle %}
+<style>
+    iframe {
+        height: 800px;
+        width: 100%;
+        border-width: 1px;
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><div>{{ site_header|default:_('Сохранение файла') }}</div></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+    <a href="{% url 'index' %}">{{ 'Вернуться на главную страницу' }}</a>
+    {% if title %} &rsaquo; {{ title }}{% endif %}
+    </div>
+{% endblock %}
+
+{% block content%}
+<form action="/save/" method="get" enctype="multipart/form-data">{% csrf_token %}
+    <button type="submit">Сохранить файл HTML</button>
+</form>
+<br>
+<br>
+<iframe src="/result/"></iframe>
+{% endblock %}

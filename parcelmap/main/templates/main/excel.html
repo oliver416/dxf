@@ -1,9 +1,9 @@
 {% extends "admin/base.html" %}
 
-{% block title %}{{ title }} | {{ site_title|default:_('Файл загружен') }}{% endblock %}
+{% block title %}{{ title }} | {{ site_title|default:_('Загрузка файла Excel') }}{% endblock %}
 
 {% block branding %}
-<h1 id="site-name"><div>{{ site_header|default:_('Загрузка файлов') }}</div></h1>
+<h1 id="site-name"><div>{{ site_header|default:_('Загрузка файла Excel') }}</div></h1>
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
@@ -17,4 +17,6 @@
 
 {% block content %}
 <h2>Файл Excel успешно загружен в базу данных</h2>
+<br>
+<a href="/admin/">Перейти в базу данных</a>
 {% endblock %}

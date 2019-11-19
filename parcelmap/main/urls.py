@@ -1,21 +1,14 @@
-from django.urls import path, include
-from django.contrib import admin
-from django.views.generic.base import RedirectView
+from django.urls import path
 from django.conf.urls import url
 from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    # path('', admin.site.urls),
-    # url(r'^$', include('django.contrib.auth.urls')),
-    # path('upload/', views.upload_dxf),
-    url('show/', views.upload_dxf),
-    path('excel/', views.upload_excel),
-    # url('show/', views.test_page, name='show'),
-    url('show2/', RedirectView.as_view(url='/')),
+    url('show_result/', views.upload_dxf),
+    url('result/', views.result),
+    url('save/', views.save_result),
+    path('excel/', views.save_excel),
+    url('save_excel_db/', views.save_excel_db),
+    url('get_count_excel/', views.get_count_excel),
+    url('get_base_count/', views.get_base_count)
 ]
-
-# from django.core.urlresolvers import reverse
-# from django.views.generic.base import RedirectView
-
-# url(r'^$', RedirectView.as_view(url=reverse('admin:index')))

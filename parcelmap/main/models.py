@@ -9,7 +9,7 @@ class Parcel(models.Model):
     ]
 
     id = models.AutoField(primary_key=True)
-    parcel_id = models.IntegerField(verbose_name='Номер участка') # TODO: unique=True ???
+    parcel_id = models.IntegerField(verbose_name='Номер участка', unique=True)
     cadastral = models.CharField(max_length=20, verbose_name='КН1', blank=True)
     cadastral_number = models.CharField(max_length=20, verbose_name='КН2', blank=True)
     area = models.FloatField(max_length=20, verbose_name='Площадь')
@@ -21,3 +21,11 @@ class Parcel(models.Model):
 
     def __str__(self):
         return 'Участок №'+str(self.parcel_id)
+
+    class Meta:
+        verbose_name = 'Участок'
+        verbose_name_plural = 'Участки'
+
+class Excel(models.Model):
+    count_rows = models.IntegerField(blank=True)
+    path = models.CharField(blank=True, max_length=200)

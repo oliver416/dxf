@@ -10,6 +10,8 @@ from .models import Parcel, Excel
 
 MEDIA_DIR = './media/'
 RESULT_PATH = 'main/templates/main/result.html'
+EXCEL_ROWS = 0
+BASE_ROWS = 0
 
 
 @login_required
@@ -136,6 +138,8 @@ def save_excel(request):
         excel_content = read_excel(name)
         Excel.objects.all().delete()
         Excel(id=1, count_rows=excel_content.index.size, path=name).save()
+        global EXCEL_ROWS
+        EXCEL_ROWS = excel_content.index.size
         return JsonResponse({"name": name})
     except Exception as e:
         return HttpResponseServerError('Ошибка загрузки Excel: ' + str(type(e).__name__) + ' ' + str(e))
@@ -143,8 +147,8 @@ def save_excel(request):
 
 @login_required
 def get_count_excel(request):
-    count_excel = Excel.objects.get(id=1).count_rows
-    count_db = json.loads(get_base_count(request).content)['parcels_count']
+    count_excel = EXCEL_ROWS
+    count_db = BASE_ROWS
     if count_db > 0:
         count = count_db/count_excel
     else:
@@ -155,11 +159,14 @@ def get_count_excel(request):
 @login_required
 def save_excel_db(request):
     try:
+        global BASE_ROWS, EXCEL_ROWS
+
         file_path = Excel.objects.get(id=1).path
         excel = read_excel(file_path)
 
         Parcel.objects.all().delete()
 
+        db_objects = list()
         for row in excel.index:
             statuses = {
                 'Продано ранее': 'Sold',
@@ -175,9 +182,14 @@ def save_excel_db(request):
             price = excel.loc[row]['Цена базовая']
             unp = excel.loc[row]['УНП']
             name = excel.loc[row]['ФИО Покупателя']
-            Parcel(parcel_id=parcel_id, cadastral=cadastral, cadastral_number=cadastral_number, area=area, status=status,
+            parcel = Parcel(parcel_id=parcel_id, cadastral=cadastral, cadastral_number=cadastral_number, area=area, status=status,
                    owner=owner, price=price,
-                   unp=unp, name=name).save()
+                   unp=unp, name=name)
+            db_objects.append(parcel)
+            BASE_ROWS = row
+        Parcel.objects.bulk_create(db_objects)
+        BASE_ROWS = 0
+        EXCEL_ROWS = 0
         return render(request, 'main/excel.html')
     except Exception as e:
         return HttpResponseServerError('Ошибка загрузки Excel: ' + str(type(e).__name__) + ' ' + str(e))

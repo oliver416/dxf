@@ -1,0 +1,2 @@
+docker build -t parcelmap .
+docker run -it -d -p 8100:8100 parcelmap /bin/sh -c "cd /opt/parcelmap/ && python3 manage.py runserver 0.0.0.0:8100"

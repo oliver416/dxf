@@ -7,4 +7,5 @@ class CustomAdmin(admin.ModelAdmin):
 
 admin.site.register(Parcel, CustomAdmin)
 
-admin.site.site_header ='Администрирование'
+admin.site.site_header = 'Администрирование'
+admin.site.site_title = 'Администрирование'

@@ -239,7 +239,7 @@ def read_dxf(file_path, result_path):
                 width: 100px;
                 height: 100px;
                 background-color: red;
-                position: relative;
+                position: absolute;
                 width: 120px;
                 background-color: #fff;
                 border: 1px solid #ccc;
@@ -275,15 +275,12 @@ def read_dxf(file_path, result_path):
             }
 
             svg{
-                position: absolute;
                 width: 100%%;
-                height: 1000px;
+                background-color: #eeeeee;
             }
 
             section {
-                position: absolute;
                 width: 100%%;
-                top: 1000px;
             }
         </style>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -516,8 +513,8 @@ def read_dxf(file_path, result_path):
                 break
         }
 
-        popup.style.left=e.pageX+"px";
-        popup.style.top=e.pageY+"px";
+        popup.style.left=e.pageX+20+"px";
+        popup.style.top=e.pageY+20+"px";
     }
 
     function onMouseLeave(e){

@@ -1,0 +1,4 @@
+Django==2.2.7
+geopandas==0.6.1
+xlrd==1.2.0
+Rtree==0.8.3
